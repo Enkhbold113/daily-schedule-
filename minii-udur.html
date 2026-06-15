@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Миний өдөр</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#080D1A;color:#E2E8F0;font-family:Georgia,serif;min-height:100vh}
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:#0D1424}
+  ::-webkit-scrollbar-thumb{background:#1E293B;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+// ── GYM ROTATION ─────────────────────────────────────────────────────────────
+const GYM_GROUPS = [
+  { muscle:"Цээж + Гар",  icon:"💪", color:"#3B82F6" },
+  { muscle:"Нуруу + Мөр", icon:"🏋️", color:"#8B5CF6" },
+  { muscle:"Хөл",          icon:"🦵", color:"#F59E0B" },
+];
+const GYM_EPOCH = new Date("2026-06-15T00:00:00");
+
+function getGymInfo(dateStr) {
+  const diff = Math.round((new Date(dateStr) - GYM_EPOCH) / 86400000);
+  if (diff % 2 === 0) return { type:"rest", muscle:"Амралт / Кардио", icon:"🧘", color:"#475569", optional:true };
+  return { type:"gym", ...GYM_GROUPS[Math.floor(diff / 2) % 3] };
+}
+
+// ── WEEK — Google Calendar-аас (June 15–21, 2026) ────────────────────────────
+// CALENDAR_WEEK_START: 2026-06-15
+const WEEK = [
+  { date:"2026-06-15", weekday:"Даваа",  short:"Дав", day:"15", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
+  { date:"2026-06-16", weekday:"Мягмар", short:"Мяг", day:"16", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
+  { date:"2026-06-17", weekday:"Лхагва", short:"Лха", day:"17", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
+  { date:"2026-06-18", weekday:"Пүрэв",  short:"Пүр", day:"18", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
+  { date:"2026-06-19", weekday:"Баасан", short:"Баа", day:"19", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
+  { date:"2026-06-20", weekday:"Бямба",  short:"Бям", day:"20", dayType:"weekend", event:null, eColor:"#475569" },
+  { date:"2026-06-21", weekday:"Ням",    short:"Ням", day:"21", dayType:"weekend", event:null, eColor:"#475569" },
+];
+
+const TODAY    = new Date().toISOString().slice(0, 10);
+const todayIdx = Math.max(0, WEEK.findIndex(d => d.date === TODAY));
+
+// ── SCHEDULES ─────────────────────────────────────────────────────────────────
+function getSchedule(dayType, gym) {
+  const gymItem = {
+    id:"s7g", time: dayType === "weekend" ? "10:30" : "16:45",
+    label: gym.type === "rest" ? "Амралт / Кардио" : gym.muscle,
+    icon: gym.icon, cat: gym.type === "rest" ? "амралт" : "бэлтгэл",
+    color: gym.color, plannedMin: gym.type === "rest" ? (dayType === "weekend" ? 45 : 30) : 90,
+  };
+
+  if (dayType === "school") return [
+    { id:"s1",  time:"04:30", label:"Сэрэх & Өглөөний цай", icon:"☕", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s2",  time:"05:00", label:"Гэрээс гарах",           icon:"🚪", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s3",  time:"05:30", label:"Сургууль (Block 1)",      icon:"📚", cat:"сургалт", color:"#10B981", plannedMin:570 },
+    { id:"s4",  time:"10:00", label:"Завсрын хоол",            icon:"🥜", cat:"хоол",    color:"#10B981", plannedMin:15  },
+    { id:"s5",  time:"11:30", label:"Үдийн хоол",              icon:"🥗", cat:"хоол",    color:"#10B981", plannedMin:30  },
+    { id:"s6",  time:"15:45", label:"Хоол хийж идэх",          icon:"🍳", cat:"хоол",    color:"#10B981", plannedMin:45  },
+    gymItem,
+    { id:"s8",  time:"18:15", label:"Амрах & Шүршүүр",  icon:"🚿", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s9",  time:"18:45", label:"Герман хэл хичээл", icon:"📖", cat:"сургалт", color:"#8B5CF6", plannedMin:90  },
+    { id:"s10", time:"20:15", label:"Орой хоол + Quark", icon:"🥛", cat:"хоол",    color:"#10B981", plannedMin:20  },
+    { id:"s11", time:"21:00", label:"Чөлөөт цаг",        icon:"😌", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s12", time:"21:30", label:"Унтах бэлтгэл",     icon:"🌙", cat:"амьдрал", color:"#64748B", plannedMin:null,
+      note:"⚠️ 21:30 унтвал 7ц нойр — 22:00 бол 6.5ц" },
+    { id:"s13", time:"22:00", label:"Унтах",              icon:"💤", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+  ];
+
+  if (dayType === "arbeit") return [
+    { id:"s1",  time:"04:30", label:"Сэрэх & Өглөөний цай", icon:"☕", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s2",  time:"05:00", label:"Гэрээс гарах",           icon:"🚪", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s3",  time:"05:30", label:"Ажил / Дадлага",         icon:"💼", cat:"ажил",    color:"#3B82F6", plannedMin:570 },
+    { id:"s4",  time:"10:00", label:"Завсрын хоол",            icon:"🥜", cat:"хоол",    color:"#10B981", plannedMin:15  },
+    { id:"s5",  time:"11:30", label:"Үдийн хоол",              icon:"🥗", cat:"хоол",    color:"#10B981", plannedMin:30  },
+    { id:"s6",  time:"15:45", label:"Хоол хийж идэх",          icon:"🍳", cat:"хоол",    color:"#10B981", plannedMin:45  },
+    gymItem,
+    { id:"s8",  time:"18:15", label:"Амрах & Шүршүүр",  icon:"🚿", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s9",  time:"18:45", label:"Герман хэл хичээл", icon:"📖", cat:"сургалт", color:"#8B5CF6", plannedMin:90  },
+    { id:"s10", time:"20:15", label:"Орой хоол + Quark", icon:"🥛", cat:"хоол",    color:"#10B981", plannedMin:20  },
+    { id:"s11", time:"21:00", label:"Чөлөөт цаг",        icon:"😌", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s12", time:"21:30", label:"Унтах бэлтгэл",     icon:"🌙", cat:"амьдрал", color:"#64748B", plannedMin:null,
+      note:"⚠️ 21:30 унтвал 7ц нойр — 22:00 бол 6.5ц" },
+    { id:"s13", time:"22:00", label:"Унтах",              icon:"💤", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+  ];
+
+  // weekend
+  return [
+    { id:"s1",  time:"07:00", label:"Сэрэх",                     icon:"☀️", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s2",  time:"07:30", label:"Өглөөний хоол",              icon:"🍳", cat:"хоол",    color:"#10B981", plannedMin:30  },
+    { id:"s3",  time:"09:00", label:"Гэрийн ажил / Цэвэрлэгээ",  icon:"🧹", cat:"амьдрал", color:"#F59E0B", plannedMin:60  },
+    gymItem,
+    { id:"s5",  time:"12:30", label:"Үдийн хоол",                 icon:"🥗", cat:"хоол",    color:"#10B981", plannedMin:30  },
+    { id:"s6",  time:"14:00", label:"Герман хэл хичээл",          icon:"📖", cat:"сургалт", color:"#8B5CF6", plannedMin:120 },
+    { id:"s7",  time:"16:30", label:"Чөлөөт цаг",                 icon:"😌", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+    { id:"s8",  time:"18:30", label:"Орой хоол + Quark",          icon:"🥛", cat:"хоол",    color:"#10B981", plannedMin:30  },
+    { id:"s9",  time:"21:00", label:"Унтах бэлтгэл",              icon:"🌙", cat:"амьдрал", color:"#64748B", plannedMin:null },
+    { id:"s10", time:"22:00", label:"Унтах",                      icon:"💤", cat:"амьдрал", color:"#F59E0B", plannedMin:null },
+  ];
+}
+
+// ── MOTIVATION ────────────────────────────────────────────────────────────────
+const MOTIVATIONS = [
+  { min:100, emoji:"🏆", color:"#F59E0B", title:"Гайхалтай! 100% гүйцэтгэл!",
+    msg:"Өнөөдөр чи өөртөө амласан бүхнээ биелүүлсэн. Энэ бол жирийн зүйл биш — олон хүн эхэлдэг, цөөхөн нь дуусгадаг. Маргааш ч ийм л байгаарай." },
+  { min:80,  emoji:"💪", color:"#3B82F6", title:"Сайн хийлээ — 80%+",
+    msg:"Ихэнхийг хийсэн. Дутуу үлдсэн хэсгийг мартаж болохгүй — маргааш тэрийгээ нөхөж хий. Тогтвортой байх нь төгс байхаас чухал." },
+  { min:60,  emoji:"⚡", color:"#F59E0B", title:"Дунд зэрэг — жоохон дутуу",
+    msg:"60% хийсэн нь 0%-аас дээр. Маргааш нэг л зүйлийг нэмж хий." },
+  { min:0,   emoji:"🌱", color:"#64748B", title:"Өнөөдөр хэцүү байсан",
+    msg:"Хүн бүр ийм өдөртэй байдаг. Чухал нь унасандаа биш, босдог эсэхдээ байгаа. Маргааш шинэ өдөр — шинэ эхлэл." },
+];
+const getMotivation = pct => MOTIVATIONS.find(m => pct >= m.min) || MOTIVATIONS[MOTIVATIONS.length - 1];
+
+// ── TIME LOG MODAL ────────────────────────────────────────────────────────────
+function TimeLogModal({ item, onSave, onClose }) {
+  const [h, setH] = useState("0");
+  const [m, setM] = useState("0");
+  const actual = parseInt(h || 0) * 60 + parseInt(m || 0);
+  const pct = item.plannedMin > 0 ? Math.round((actual / item.plannedMin) * 100) : 100;
+  const fb = actual === 0
+    ? { emoji:"❌", color:"#F87171", msg:"Хийгээгүй байна. Маргааш нөхнө үү?" }
+    : pct >= 100 ? { emoji:"✅", color:"#34D399", msg:"Маш сайн! Төлөвлөсөнчлөн хийлээ." }
+    : pct >= 70  ? { emoji:"⚠️", color:"#F59E0B", msg:`${item.plannedMin - actual} мин дутуу.` }
+    : { emoji:"🔴", color:"#F87171", msg:"Хагасаас бага хийлээ." };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:"#0F1929",borderRadius:16,padding:24,width:"100%",maxWidth:320,border:"1px solid #1E293B"}}>
+        <p style={{margin:"0 0 3px",fontSize:14,color:"#E2E8F0"}}>{item.icon} {item.label}</p>
+        <p style={{margin:"0 0 18px",fontSize:11,color:"#475569"}}>Төлөвлөсөн: {Math.floor(item.plannedMin/60)}ц {item.plannedMin%60||""}м</p>
+        <p style={{margin:"0 0 8px",fontSize:12,color:"#64748B"}}>Бодитоор хийсэн:</p>
+        <div style={{display:"flex",gap:8,marginBottom:14}}>
+          {[["цаг",h,setH,"23"],["мин",m,setM,"59"]].map(([lbl,val,setter,max])=>(
+            <div key={lbl} style={{flex:1}}>
+              <input type="number" min="0" max={max} value={val} onChange={e=>setter(e.target.value)}
+                style={{width:"100%",background:"#1E293B",border:"1px solid #334155",borderRadius:8,padding:"10px",color:"#E2E8F0",fontSize:18,textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+              <p style={{textAlign:"center",margin:"3px 0 0",fontSize:10,color:"#475569"}}>{lbl}</p>
+            </div>
+          ))}
+        </div>
+        {actual > 0 && (
+          <div style={{background:`${fb.color}18`,border:`1px solid ${fb.color}44`,borderRadius:10,padding:"10px 12px",marginBottom:14}}>
+            <p style={{margin:0,fontSize:12,color:fb.color}}>{fb.emoji} {fb.msg}</p>
+            <div style={{marginTop:6,background:"#1E293B",borderRadius:99,height:4}}>
+              <div style={{width:`${Math.min(pct,100)}%`,height:"100%",background:fb.color,borderRadius:99}}/>
+            </div>
+            <p style={{margin:"3px 0 0",fontSize:10,color:"#475569"}}>{pct}%</p>
+          </div>
+        )}
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:"10px",background:"transparent",border:"1px solid #1E293B",borderRadius:8,color:"#475569",cursor:"pointer",fontFamily:"inherit",fontSize:12}}>Цуцлах</button>
+          <button onClick={()=>onSave(actual)} style={{flex:2,padding:"10px",background:"#3B82F6",border:"none",borderRadius:8,color:"white",cursor:"pointer",fontFamily:"inherit",fontSize:12}}>Хадгалах</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [dayIdx,   setDayIdx]   = useState(todayIdx);
+  const [tab,      setTab]      = useState("schedule");
+  const [checked,  setChecked]  = useState({});  // { date: { id: bool } }
+  const [timeLogs, setTimeLogs] = useState({});  // { date: { id: mins } }
+  const [journals, setJournals] = useState({});  // { date: string }
+  const [ratings,  setRatings]  = useState({});  // { date: { key: n } }
+  const [logModal, setLogModal] = useState(null);
+
+  const day      = WEEK[dayIdx];
+  const gym      = getGymInfo(day.date);
+  const schedule = getSchedule(day.dayType, gym);
+
+  const dayChecked  = checked[day.date]  || {};
+  const dayTimeLogs = timeLogs[day.date] || {};
+  const dayJournal  = journals[day.date] || "";
+  const dayRatings  = ratings[day.date]  || {};
+
+  const setDayChecked  = fn => setChecked(p  => ({ ...p, [day.date]: fn(p[day.date]  || {}) }));
+  const setDayTimeLogs = fn => setTimeLogs(p => ({ ...p, [day.date]: fn(p[day.date] || {}) }));
+  const setDayJournal  = v  => setJournals(p => ({ ...p, [day.date]: v }));
+  const setDayRatings  = fn => setRatings(p  => ({ ...p, [day.date]: fn(p[day.date]  || {}) }));
+
+  const trackable = schedule.filter(s => s.plannedMin !== null);
+  const doneCount = schedule.filter(s => dayChecked[s.id]).length;
+  const pct       = Math.round((doneCount / schedule.length) * 100);
+  const motiv     = getMotivation(pct);
+  const sleepWarn = day.dayType !== "weekend";
+
+  const timeScore = () => {
+    const logged = trackable.filter(s => dayTimeLogs[s.id] !== undefined);
+    if (!logged.length) return null;
+    const total  = logged.reduce((a, s) => a + s.plannedMin, 0);
+    const actual = logged.reduce((a, s) => a + dayTimeLogs[s.id], 0);
+    return Math.round((actual / total) * 100);
+  };
+  const ts = timeScore();
+
+  const dayTypeColor = day.dayType === "school" ? "#10B981" : day.dayType === "arbeit" ? "#3B82F6" : "#475569";
+
+  return (
+    <div style={{minHeight:"100vh",background:"#080D1A",fontFamily:"Georgia,serif",color:"#E2E8F0"}}>
+      {logModal && (
+        <TimeLogModal item={logModal}
+          onSave={mins => { setDayTimeLogs(p => ({ ...p, [logModal.id]: mins })); setDayChecked(p => ({ ...p, [logModal.id]: true })); setLogModal(null); }}
+          onClose={() => setLogModal(null)}/>
+      )}
+
+      {/* HEADER */}
+      <div style={{background:"#0D1424",borderBottom:"1px solid #1E293B",padding:"20px 16px 12px",position:"sticky",top:0,zIndex:10}}>
+        <div style={{maxWidth:520,margin:"0 auto"}}>
+
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div>
+              <p style={{color:"#475569",fontSize:10,letterSpacing:3,textTransform:"uppercase",margin:"0 0 2px"}}>
+                Erfurt · 6/15 – 6/21, 2026
+              </p>
+              <h1 style={{margin:0,fontSize:20,fontWeight:700,color:"#F1F5F9"}}>Миний өдөр</h1>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:24,fontWeight:800,color:motiv.color}}>{pct}%</div>
+              <div style={{fontSize:9,color:"#475569"}}>гүйцэтгэл</div>
+            </div>
+          </div>
+
+          {/* Day selector */}
+          <div style={{overflowX:"auto",marginBottom:10,paddingBottom:2}}>
+            <div style={{display:"flex",gap:4,width:"max-content"}}>
+              {WEEK.map((d, i) => {
+                const g   = getGymInfo(d.date);
+                const sel = dayIdx === i;
+                const isToday = d.date === TODAY;
+                const col = d.dayType === "school" ? "#10B981" : d.dayType === "arbeit" ? "#3B82F6" : "#475569";
+                return (
+                  <button key={d.date} onClick={() => setDayIdx(i)} style={{
+                    width:50, padding:"6px 4px",
+                    background: sel ? `${col}33` : "#111827",
+                    border: `1.5px solid ${sel ? col : isToday ? "#334155" : "#1E293B"}`,
+                    borderRadius:9, cursor:"pointer",
+                    display:"flex", flexDirection:"column", alignItems:"center", gap:2,
+                  }}>
+                    <span style={{fontSize:11}}>{g.icon}</span>
+                    <span style={{fontSize:9, color: sel ? col : isToday ? "#E2E8F0" : "#334155", fontWeight: sel || isToday ? 700 : 400}}>
+                      {d.short}
+                    </span>
+                    <span style={{fontSize:8, color: sel ? `${col}bb` : "#334155"}}>{d.day}</span>
+                    {isToday && !sel && <span style={{fontSize:6, color:"#F59E0B"}}>●</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Today badge */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:`${gym.color}18`,border:`1px solid ${gym.color}44`,borderRadius:10,padding:"8px 14px",marginBottom:6}}>
+            <div>
+              <p style={{margin:0,fontSize:13,color:gym.color,fontWeight:600}}>{gym.icon} {gym.muscle}</p>
+              {gym.optional && <p style={{margin:0,fontSize:10,color:"#475569"}}>Эрч хүчтэй бол хий</p>}
+            </div>
+            <div style={{textAlign:"right"}}>
+              {day.event
+                ? <p style={{margin:0,fontSize:11,color:day.eColor,fontWeight:600}}>
+                    {day.dayType==="school"?"📚":"💼"} {day.event}
+                  </p>
+                : <p style={{margin:0,fontSize:11,color:"#475569"}}>😊 Амралтын өдөр</p>
+              }
+              <p style={{margin:0,fontSize:9,color:"#475569"}}>{day.weekday} · {day.date.slice(5).replace("-","/")} </p>
+            </div>
+          </div>
+
+          {sleepWarn && (
+            <p style={{fontSize:10,color:"#F87171",textAlign:"right",marginBottom:6}}>
+              😴 22:00 унтвал 6.5ц — <strong>21:30 унт → 7ц</strong>
+            </p>
+          )}
+
+          {/* Progress */}
+          <div style={{marginBottom:10}}>
+            <div style={{background:"#1E293B",borderRadius:99,height:5}}>
+              <div style={{width:`${pct}%`,height:"100%",background:`linear-gradient(90deg,${motiv.color},#8B5CF6)`,borderRadius:99,transition:"width 0.5s"}}/>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
+              <span style={{fontSize:9,color:"#334155"}}>{doneCount}/{schedule.length} зүйл</span>
+              {ts !== null && <span style={{fontSize:9,color:"#475569"}}>Цаг: {ts}%</span>}
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{display:"flex",gap:3}}>
+            {[["schedule","📋 Хуваарь"],["timelog","⏱ Цаг"],["journal","✍️ Дэвтэр"],["summary","🏅 Дүгнэлт"]].map(([t,lbl]) => (
+              <button key={t} onClick={() => setTab(t)} style={{
+                flex:1, padding:"7px 2px",
+                background: tab === t ? "#1E293B" : "transparent",
+                border: tab === t ? "1px solid #334155" : "1px solid transparent",
+                borderRadius:8, color: tab === t ? "#E2E8F0" : "#475569",
+                fontSize:9, cursor:"pointer", fontFamily:"inherit",
+              }}>{lbl}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CONTENT */}
+      <div style={{maxWidth:520,margin:"0 auto",padding:"16px 16px 60px"}}>
+
+        {/* SCHEDULE */}
+        {tab === "schedule" && schedule.map((item, i) => (
+          <div key={item.id} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:2}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:38,flexShrink:0,paddingTop:2}}>
+              <span style={{fontSize:10,color:"#334155"}}>{item.time}</span>
+              {i < schedule.length - 1 && <div style={{width:1,minHeight:24,background:"#1E293B",margin:"3px 0",flexGrow:1}}/>}
+            </div>
+            <div style={{flex:1,background:"#0F1929",borderRadius:10,padding:"10px 12px",marginBottom:5,borderLeft:`3px solid ${item.color}`,opacity:dayChecked[item.id]?0.35:1,transition:"opacity 0.2s"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:17}}>{item.icon}</span>
+                <div style={{flex:1}}>
+                  <p style={{margin:0,fontSize:13,color:"#CBD5E1"}}>{item.label}</p>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2,flexWrap:"wrap"}}>
+                    <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:item.color,opacity:0.7}}>{item.cat}</span>
+                    {item.plannedMin && <span style={{fontSize:9,color:"#334155"}}>{Math.floor(item.plannedMin/60)}ц {item.plannedMin%60||""}м</span>}
+                    {dayTimeLogs[item.id] !== undefined && <span style={{fontSize:9,color:"#34D399"}}>✓ {Math.floor(dayTimeLogs[item.id]/60)}ц {dayTimeLogs[item.id]%60}м</span>}
+                  </div>
+                  {item.note && <p style={{margin:"5px 0 0",fontSize:10,color:"#F87171"}}>{item.note}</p>}
+                </div>
+                <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                  {item.plannedMin && (
+                    <button onClick={() => setLogModal(item)} style={{padding:"3px 8px",background:"#1E293B",border:"1px solid #334155",borderRadius:6,color:"#64748B",fontSize:9,cursor:"pointer",fontFamily:"inherit"}}>⏱</button>
+                  )}
+                  <div onClick={() => setDayChecked(p => ({ ...p, [item.id]: !p[item.id] }))} style={{
+                    width:20, height:20, borderRadius:"50%", cursor:"pointer",
+                    border: `2px solid ${dayChecked[item.id] ? item.color : "#1E293B"}`,
+                    background: dayChecked[item.id] ? item.color : "transparent",
+                    display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s", flexShrink:0,
+                  }}>
+                    {dayChecked[item.id] && <span style={{color:"#080D1A",fontSize:10}}>✓</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* TIMELOG */}
+        {tab === "timelog" && (
+          <div>
+            <p style={{fontSize:12,color:"#64748B",marginBottom:14,lineHeight:1.6}}>⏱ товч дарж бодит цагаа бүртгэ.</p>
+            {trackable.map(item => {
+              const logged = dayTimeLogs[item.id];
+              const pi = logged !== undefined ? Math.round((logged / item.plannedMin) * 100) : null;
+              const bc = pi === null ? "#1E293B" : pi >= 100 ? "#34D399" : pi >= 70 ? "#F59E0B" : "#F87171";
+              return (
+                <div key={item.id} style={{background:"#0F1929",borderRadius:12,padding:"14px",marginBottom:10,borderLeft:`3px solid ${item.color}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div>
+                      <p style={{margin:0,fontSize:13,color:"#E2E8F0"}}>{item.icon} {item.label}</p>
+                      <span style={{fontSize:10,color:"#475569"}}>Төлөвлөсөн: {Math.floor(item.plannedMin/60)}ц {item.plannedMin%60||""}м</span>
+                    </div>
+                    <button onClick={() => setLogModal(item)} style={{padding:"6px 12px",background:logged!==undefined?"#1E293B":"#3B82F6",border:"none",borderRadius:8,color:"white",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>
+                      {logged !== undefined ? "Засах" : "Бүртгэх"}
+                    </button>
+                  </div>
+                  <div style={{background:"#1E293B",borderRadius:99,height:4}}>
+                    <div style={{width:`${Math.min(pi||0,100)}%`,height:"100%",background:bc,borderRadius:99,transition:"width 0.4s"}}/>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                    <span style={{fontSize:10,color:"#334155"}}>{logged!==undefined ? `Бодит: ${Math.floor(logged/60)}ц ${logged%60}м` : "Бүртгэгдээгүй"}</span>
+                    {pi !== null && <span style={{fontSize:10,color:bc}}>{pi}%</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* JOURNAL */}
+        {tab === "journal" && (
+          <div>
+            {sleepWarn && (
+              <div style={{background:"#F8714818",border:"1px solid #F8714844",borderRadius:12,padding:"12px 14px",marginBottom:14}}>
+                <p style={{margin:"0 0 4px",fontSize:12,color:"#F87171",fontWeight:600}}>😴 Нойрны анхааруулга</p>
+                <p style={{margin:0,fontSize:11,color:"#94A3B8",lineHeight:1.6}}>
+                  22:00–04:30 = <strong style={{color:"#F87171"}}>6.5 цаг</strong> — булчин өсөхөд дутуу.<br/>
+                  <strong style={{color:"#34D399"}}>21:30 унтвал → 7 цаг</strong> авна. Зөвхөн 30 мин л ялгаатай.
+                </p>
+              </div>
+            )}
+            <p style={{fontSize:12,color:"#64748B",marginBottom:8}}>Өнөөдрийн үнэлгээ</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+              {[{q:"⚡ Эрч хүч",key:"energy"},{q:"💪 Бэлтгэл",key:"workout"},{q:"📖 Хичээл",key:"study"},{q:"🥗 Хоол",key:"food"}].map(({q,key}) => (
+                <div key={key} style={{background:"#0F1929",borderRadius:10,padding:"10px"}}>
+                  <p style={{margin:"0 0 8px",fontSize:11,color:"#64748B"}}>{q}</p>
+                  <div style={{display:"flex",gap:3}}>
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} onClick={() => setDayRatings(p => ({ ...p, [key]: n }))} style={{
+                        flex:1, padding:"4px 0",
+                        background: n <= (dayRatings[key] || 0) ? "#F59E0B22" : "#1E293B",
+                        border: `1px solid ${n <= (dayRatings[key] || 0) ? "#F59E0B" : "#1E293B"}`,
+                        borderRadius:5, color: n <= (dayRatings[key] || 0) ? "#F59E0B" : "#334155",
+                        fontSize:11, cursor:"pointer",
+                      }}>★</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p style={{fontSize:12,color:"#64748B",marginBottom:6}}>Тэмдэглэл</p>
+            <textarea value={dayJournal} onChange={e => setDayJournal(e.target.value)}
+              placeholder="Өнөөдөр юу сайн явсан бэ? Юу хэцүү байсан бэ? Маргааш юуг өөрчлөх вэ?..."
+              style={{width:"100%",minHeight:130,background:"#0F1929",border:"1px solid #1E293B",borderRadius:12,padding:"14px",color:"#CBD5E1",fontSize:13,fontFamily:"inherit",lineHeight:1.6,resize:"vertical",outline:"none",boxSizing:"border-box"}}/>
+            <p style={{fontSize:10,color:"#334155",textAlign:"right",marginTop:3}}>{dayJournal.length} тэмдэгт</p>
+          </div>
+        )}
+
+        {/* SUMMARY */}
+        {tab === "summary" && (
+          <div>
+            <div style={{background:`${motiv.color}15`,border:`1px solid ${motiv.color}44`,borderRadius:16,padding:"20px",marginBottom:14,textAlign:"center"}}>
+              <div style={{fontSize:38,marginBottom:6}}>{motiv.emoji}</div>
+              <h2 style={{margin:"0 0 8px",fontSize:15,color:motiv.color}}>{motiv.title}</h2>
+              <p style={{margin:0,fontSize:12,color:"#94A3B8",lineHeight:1.7}}>{motiv.msg}</p>
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+              {[
+                { label:"Гүйцэтгэл",         value:`${pct}%`,                           color:motiv.color },
+                { label:"Хийсэн зүйл",        value:`${doneCount}/${schedule.length}`,   color:"#3B82F6"  },
+                { label:"Цагийн нарийвчлал",  value: ts !== null ? `${ts}%` : "—",      color:"#10B981"  },
+                { label:"Нойр",               value: sleepWarn ? "6.5ц ⚠️" : "9ц ✅",  color: sleepWarn ? "#F87171" : "#34D399" },
+              ].map((s, idx) => (
+                <div key={idx} style={{background:"#0F1929",borderRadius:12,padding:"14px",textAlign:"center"}}>
+                  <div style={{fontSize:18,fontWeight:700,color:s.color,marginBottom:4}}>{s.value}</div>
+                  <div style={{fontSize:10,color:"#475569"}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {trackable.filter(s => dayTimeLogs[s.id] !== undefined).length > 0 && (
+              <div style={{background:"#0F1929",borderRadius:12,padding:"14px",marginBottom:12}}>
+                <p style={{margin:"0 0 10px",fontSize:12,color:"#64748B"}}>Цагийн дүн</p>
+                {trackable.filter(s => dayTimeLogs[s.id] !== undefined).map(item => {
+                  const diff = dayTimeLogs[item.id] - item.plannedMin;
+                  return (
+                    <div key={item.id} style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                      <span style={{fontSize:12,color:"#94A3B8"}}>{item.icon} {item.label}</span>
+                      <span style={{fontSize:11,color:diff>=0?"#34D399":"#F87171"}}>{diff>=0?"+":""}{diff}м</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {dayJournal ? (
+              <div style={{background:"#0F1929",borderRadius:12,padding:"14px",borderLeft:"3px solid #8B5CF6"}}>
+                <p style={{margin:"0 0 6px",fontSize:11,color:"#8B5CF6"}}>✍️ Тэмдэглэл</p>
+                <p style={{margin:0,fontSize:12,color:"#64748B",lineHeight:1.6}}>{dayJournal}</p>
+              </div>
+            ) : (
+              <button onClick={() => setTab("journal")} style={{width:"100%",padding:"12px",background:"transparent",border:"1px dashed #1E293B",borderRadius:12,color:"#334155",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>
+                ✍️ Өнөөдрийн дүгнэлт бичих →
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

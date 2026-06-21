@@ -34,16 +34,16 @@ function getGymInfo(dateStr) {
   return { type:"gym", ...GYM_GROUPS[Math.floor(diff / 2) % 3] };
 }
 
-// ── WEEK — Google Calendar-аас (June 15–21, 2026) ────────────────────────────
-// CALENDAR_WEEK_START: 2026-06-15
+// ── WEEK — Google Calendar-аас (June 22–28, 2026) ────────────────────────────
+// CALENDAR_WEEK_START: 2026-06-22
 const WEEK = [
-  { date:"2026-06-15", weekday:"Даваа",  short:"Дав", day:"15", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
-  { date:"2026-06-16", weekday:"Мягмар", short:"Мяг", day:"16", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
-  { date:"2026-06-17", weekday:"Лхагва", short:"Лха", day:"17", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
-  { date:"2026-06-18", weekday:"Пүрэв",  short:"Пүр", day:"18", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
-  { date:"2026-06-19", weekday:"Баасан", short:"Баа", day:"19", dayType:"school",  event:"Schule – Block 1", eColor:"#10B981" },
-  { date:"2026-06-20", weekday:"Бямба",  short:"Бям", day:"20", dayType:"weekend", event:null, eColor:"#475569" },
-  { date:"2026-06-21", weekday:"Ням",    short:"Ням", day:"21", dayType:"weekend", event:null, eColor:"#475569" },
+  { date:"2026-06-22", weekday:"Даваа",  short:"Дав", day:"22", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-06-23", weekday:"Мягмар", short:"Мяг", day:"23", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-06-24", weekday:"Лхагва", short:"Лха", day:"24", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-06-25", weekday:"Пүрэв",  short:"Пүр", day:"25", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-06-26", weekday:"Баасан", short:"Баа", day:"26", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-06-27", weekday:"Бямба",  short:"Бям", day:"27", dayType:"weekend", event:null, eColor:"#475569" },
+  { date:"2026-06-28", weekday:"Ням",    short:"Ням", day:"28", dayType:"weekend", event:null, eColor:"#475569" },
 ];
 
 const TODAY    = new Date().toISOString().slice(0, 10);
@@ -220,7 +220,7 @@ function App() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div>
               <p style={{color:"#475569",fontSize:10,letterSpacing:3,textTransform:"uppercase",margin:"0 0 2px"}}>
-                Erfurt · 6/15 – 6/21, 2026
+                Erfurt · 6/22 – 6/28, 2026
               </p>
               <h1 style={{margin:0,fontSize:20,fontWeight:700,color:"#F1F5F9"}}>Миний өдөр</h1>
             </div>

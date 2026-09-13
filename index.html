@@ -34,16 +34,16 @@ function getGymInfo(dateStr) {
   return { type:"gym", ...GYM_GROUPS[Math.floor(diff / 2) % 3] };
 }
 
-// ── WEEK — Google Calendar-аас (Aug 3 – Aug 9, 2026) ────────────────────────
-// CALENDAR_WEEK_START: 2026-08-03
+// ── WEEK — Google Calendar-аас (Sep 14 – Sep 20, 2026) ──────────────────────
+// CALENDAR_WEEK_START: 2026-09-14
 const WEEK = [
-  { date:"2026-08-03", weekday:"Даваа",  short:"Дав", day:"03", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
-  { date:"2026-08-04", weekday:"Мягмар", short:"Мяг", day:"04", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
-  { date:"2026-08-05", weekday:"Лхагва", short:"Лха", day:"05", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
-  { date:"2026-08-06", weekday:"Пүрэв",  short:"Пүр", day:"06", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
-  { date:"2026-08-07", weekday:"Баасан", short:"Баа", day:"07", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
-  { date:"2026-08-08", weekday:"Бямба",  short:"Бям", day:"08", dayType:"weekend", event:null, eColor:"#475569" },
-  { date:"2026-08-09", weekday:"Ням",    short:"Ням", day:"09", dayType:"weekend", event:null, eColor:"#475569" },
+  { date:"2026-09-14", weekday:"Даваа",  short:"Дав", day:"14", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-09-15", weekday:"Мягмар", short:"Мяг", day:"15", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-09-16", weekday:"Лхагва", short:"Лха", day:"16", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-09-17", weekday:"Пүрэв",  short:"Пүр", day:"17", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-09-18", weekday:"Баасан", short:"Баа", day:"18", dayType:"arbeit",  event:"Arbeit", eColor:"#3B82F6" },
+  { date:"2026-09-19", weekday:"Бямба",  short:"Бям", day:"19", dayType:"weekend", event:null, eColor:"#475569" },
+  { date:"2026-09-20", weekday:"Ням",    short:"Ням", day:"20", dayType:"weekend", event:null, eColor:"#475569" },
 ];
 
 const TODAY    = new Date().toISOString().slice(0, 10);
@@ -220,7 +220,7 @@ function App() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
             <div>
               <p style={{color:"#475569",fontSize:10,letterSpacing:3,textTransform:"uppercase",margin:"0 0 2px"}}>
-                Erfurt · 8/3 – 8/9, 2026
+                Erfurt · 9/14 – 9/20, 2026
               </p>
               <h1 style={{margin:0,fontSize:20,fontWeight:700,color:"#F1F5F9"}}>Миний өдөр</h1>
             </div>
